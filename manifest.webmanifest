@@ -1,1 +1,14 @@
-{"name":"My Expense Tracker","short_name":"Expenses","start_url":"./index.html","display":"standalone","background_color":"#0b1220","theme_color":"#0b1220","icons":[{"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]}
+{
+  "id": "./",
+  "name": "Expense Tracker",
+  "short_name": "Expenses",
+  "description": "A private monthly expense and savings tracker in PKR.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f5fb",
+  "theme_color": "#252443",
+  "icons": [
+    {"src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable"}
+  ]
+}

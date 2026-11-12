@@ -1,14 +1,438 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b1220"><title>My Expense Tracker</title><link rel="manifest" href="manifest.webmanifest"><style>
-:root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#e8eef8;background:#0b1220}*{box-sizing:border-box}body{margin:0;max-width:850px;margin:auto;padding:18px 15px 90px}h1{font-size:24px;margin:6px 0}h2{font-size:17px;margin:0 0 14px}.muted{color:#a5b3c9;font-size:13px}.card{background:#152136;border:1px solid #293b56;border-radius:18px;padding:17px;margin:14px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stat{background:#1c2b43;border-radius:12px;padding:13px}.stat strong{display:block;font-size:22px;margin-top:7px;overflow-wrap:anywhere}.green{color:#5ee0a0}.red{color:#ff9a9a}label{display:block;color:#c5d0e0;font-size:13px;margin:10px 0 5px}input,select,button{font:inherit;width:100%;padding:12px;border-radius:10px;border:1px solid #3b506b;background:#0e192b;color:#fff}button{background:#20b486;color:#061810;border:0;font-weight:750;cursor:pointer;margin-top:13px}button.secondary{background:#273952;color:#e8eef8}.row{display:flex;align-items:center;justify-content:space-between;gap:10px}.tx{padding:12px 0;border-bottom:1px solid #2c3b52}.tx:last-child{border-bottom:0}.tx small{color:#a5b3c9}.tx button{width:auto;margin:0;background:#45313a;color:#ffd6d6;padding:7px 10px}.bar{height:10px;background:#2a3a50;border-radius:20px;overflow:hidden;margin:8px 0 14px}.fill{height:100%;background:#22c58c}.pill{display:inline-block;background:#263953;padding:5px 9px;border-radius:20px;font-size:12px}.split{display:grid;grid-template-columns:1fr 1fr;gap:10px}#status{min-height:18px;color:#5ee0a0;font-size:13px}details{margin:12px 0}summary{cursor:pointer}a{color:#77dbbf}.tiny{font-size:12px}.nowrap{white-space:nowrap}@media(max-width:360px){.grid{grid-template-columns:1fr}.stat strong{font-size:20px}}
-</style></head><body>
-<div class="row"><div><div class="muted">PERSONAL FINANCE</div><h1>My Expense Tracker</h1></div><span class="pill">PKR</span></div>
-<div class="card"><div class="row"><h2>Monthly overview</h2><input id="month" type="month" style="width:155px"></div><div class="grid"><div class="stat"><span class="muted">Income</span><strong id="income">—</strong></div><div class="stat"><span class="muted">Expenses & outflows</span><strong id="spent" class="red">—</strong></div><div class="stat"><span class="muted">Remaining</span><strong id="remaining" class="green">—</strong></div><div class="stat"><span class="muted">Savings goal</span><strong id="goal">—</strong></div></div><div class="muted" style="margin-top:15px">Savings target progress <span id="progressText"></span></div><div class="bar"><div class="fill" id="progress"></div></div><div class="muted tiny">Remaining is calculated from recorded income and outflows, not your bank balance. Loan repayments and transfers are tracked separately.</div></div>
-<div class="card"><h2>Add transaction</h2><form id="form"><div class="split"><div><label for="date">Date</label><input id="date" type="date" required></div><div><label for="amount">Amount (Rs.)</label><input id="amount" type="number" min="0.01" step="0.01" placeholder="e.g. 300" required></div></div><div class="split"><div><label for="kind">Transaction type</label><select id="kind"><option value="expense">Expense</option><option value="income">Income</option><option value="debt">Loan repayment</option><option value="transfer">Personal transfer</option><option value="refund">Refund / reimbursement</option></select></div><div><label for="category">Category</label><select id="category"><option>Food & lunch</option><option>Dinner / household</option><option>Bykea / transport</option><option>Cigarettes</option><option>Party / social</option><option>Phone repair</option><option>Loan</option><option>Family / friends</option><option>Shopping</option><option>Utilities</option><option>Other</option></select></div></div><label for="note">Description (optional)</label><input id="note" maxlength="160" placeholder="e.g. Bykea round trip"><button type="submit">+ Save transaction</button><div id="status" role="status"></div></form></div>
-<div class="card"><h2>Quick add</h2><div class="grid"><button class="secondary" data-quick="300|Bykea / transport|Bykea round trip">+ Rs. 300 Bykea</button><button class="secondary" data-quick="200|Cigarettes|Cigarette pack">+ Rs. 200 cigarettes</button></div></div>
-<div class="card"><h2>Spending by category</h2><div id="categories" class="muted">No spending recorded yet.</div></div>
-<div class="card"><div class="row"><h2>Transactions</h2><span id="count" class="muted"></span></div><div id="transactions" class="muted">No transactions for this month.</div></div>
-<div class="card"><h2>Settings & backup</h2><div class="split"><div><label for="salary">Default monthly salary</label><input type="number" id="salary" min="0" step="1"></div><div><label for="target">Monthly savings target</label><input type="number" id="target" min="0" step="1"></div></div><button id="saveSettings" class="secondary" type="button">Save settings</button><div class="split"><button class="secondary" id="export" type="button">Export JSON backup</button><button class="secondary" id="csv" type="button">Export CSV</button></div><label for="import">Restore JSON backup</label><input id="import" type="file" accept="application/json,.json"><details><summary>About your records</summary><p class="muted">Data is stored in this browser on this device. Clearing browser data or switching browsers may erase it. Export backups regularly. Nothing is uploaded to a server. Your prior bank transactions have not been imported automatically, to avoid duplicates and incorrect classifications.</p></details></div>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#252443">
+<meta name="description" content="Track monthly expenses and savings in Pakistani rupees, privately on this device.">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<title>Expense Tracker</title>
+<style>
+:root{color-scheme:light;--ink:#252443;--muted:#5c5a70;--paper:#fff;--canvas:#f6f5fb;--line:#dedce9;--accent:#5741a5;--wash:#eeebff;--green:#236450;--danger:#a12840;font-family:system-ui,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:var(--canvas);color:var(--ink);line-height:1.45}
+main{width:min(100% - 2rem,67rem);margin:auto;padding:2rem 0}
+header{display:flex;align-items:center;gap:.8rem;margin-bottom:1.3rem}
+header img{border-radius:.85rem}
+h1,h2,p{margin:0}
+h1{font-size:clamp(1.55rem,5vw,2.2rem);letter-spacing:-.04em}
+h2{font-size:1.12rem}
+small,.muted{color:var(--muted);font-size:.88rem}
+section,details{background:var(--paper);border:1px solid var(--line);border-radius:1.1rem;padding:1rem}
+.overview{background:var(--ink);color:white;border:0;margin-bottom:1rem;padding:1.15rem}
+.overview .muted{color:#e2dff9}
+.overview-head{display:flex;gap:.7rem 1rem;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.overview-head label{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+.totals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.6rem;margin:1rem 0}
+.totals div{background:#3b395b;border-radius:.8rem;padding:.7rem;min-width:0}
+.totals dt{color:#e2dff9;font-size:.82rem}
+.totals dd{margin:.25rem 0 0;font-size:clamp(.95rem,3.6vw,1.42rem);font-weight:750;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.totals .good{background:#245447}
+.layout,.stack{display:grid;gap:1rem;align-content:start}
+form{display:grid;gap:.75rem;margin-top:.8rem}
+.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.65rem}
+label{display:grid;gap:.28rem;font-size:.88rem;font-weight:650}
+input,select,button{font:inherit;min-height:44px;border:1px solid var(--line);border-radius:.65rem}
+input,select{width:100%;min-width:0;background:#fff;color:var(--ink);padding:.45rem .6rem}
+input[type=month]{width:auto;max-width:100%}
+button{padding:.45rem .8rem;background:var(--wash);color:var(--ink);font-weight:680;cursor:pointer}
+button:hover{filter:brightness(.94)}
+button.primary{background:var(--accent);color:white;border-color:var(--accent)}
+:focus-visible{outline:3px solid #9162df;outline-offset:2px}
+ul{padding:0;margin:.6rem 0 0;list-style:none}
+li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.5rem;align-items:center;padding:.65rem 0;border-top:1px solid var(--line)}
+li strong,li small{display:block;overflow-wrap:anywhere}
+li .amount{text-align:right;max-width:45vw}
+.entry-actions{display:grid;justify-items:end;gap:.25rem}
+.delete{color:var(--danger);background:#fff;font-size:.82rem}
+summary{font-weight:700;cursor:pointer;padding:.35rem 0;min-height:44px}
+summary + p{margin-top:.3rem}
+.actions{display:flex;flex-wrap:wrap;gap:.5rem;margin:.65rem 0}
+.feedback{margin:.65rem 0 0;color:var(--green);font-size:.9rem}
+.feedback:empty{margin:0}
+.feedback.error{color:var(--danger)}
+#category-list .amount{font-weight:700}
+#empty{margin-top:.65rem}
+footer{margin:1rem 0 0}
+@media(max-width:355px){.fields{grid-template-columns:1fr}}
+@media(min-width:710px){main{padding:3rem 0}.layout{grid-template-columns:minmax(0,2fr) minmax(0,3fr)}.totals{grid-template-columns:repeat(4,minmax(0,1fr))}section,details,.overview{padding:1.2rem}}
+@media print{
+  @page{margin:14mm}
+  body{background:white;color:#111;font-size:10pt}
+  main{width:auto;margin:0;padding:0}
+  header{margin-bottom:.65rem}
+  header img,.overview-head label,.layout>.stack:first-child,details,footer,.delete,.feedback{display:none!important}
+  .layout,.stack{display:block}
+  section,.overview{background:white;color:#111;border:1px solid #bbb;border-radius:0;padding:.65rem;margin-bottom:.65rem}
+  .overview,.totals,.layout section:nth-child(2),li{break-inside:avoid}
+  .overview .muted,.totals dt,.muted,small{color:#333}
+  .totals{grid-template-columns:repeat(4,minmax(0,1fr));margin:.6rem 0}
+  .totals div,.totals .good{background:white;border:1px solid #bbb;border-radius:0}
+  .totals dd{font-size:11pt}
+  h2,#history-caption{break-after:avoid}
+}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <img src="./icon.svg" width="46" height="46" alt="">
+  <div><h1>Expense Tracker</h1><p class="muted">Your monthly budget in PKR</p></div>
+</header>
+
+<section class="overview" aria-labelledby="overview-title">
+  <div class="overview-head">
+    <h2 id="overview-title">Monthly overview</h2>
+    <label>Month <input id="month" type="month" min="0001-01" max="9999-12" required></label>
+  </div>
+  <dl class="totals">
+    <div><dt>Salary</dt><dd id="salary-total"></dd></div>
+    <div><dt>Spent</dt><dd id="spent-total"></dd></div>
+    <div><dt>Left after expenses</dt><dd id="balance-total"></dd></div>
+    <div id="budget-tile"><dt>Spendable after target</dt><dd id="budget-total"></dd></div>
+  </dl>
+  <p id="goal" class="muted" aria-live="polite"></p>
+</section>
+
+<div class="layout">
+  <div class="stack">
+    <section aria-labelledby="add-title">
+      <h2 id="add-title">Add an expense</h2>
+      <form id="expense-form">
+        <div class="fields">
+          <label>Amount (PKR)<input id="amount" type="number" inputmode="decimal" min="0.01" max="100000000" step="0.01" required></label>
+          <label>Date<input id="date" type="date" min="0001-01-01" max="9999-12-31" required></label>
+        </div>
+        <label>Category<select id="category" required></select></label>
+        <label>Note (optional)<input id="note" type="text" maxlength="160" placeholder="e.g. Weekly groceries"></label>
+        <button class="primary" type="submit">Add expense</button>
+      </form>
+      <p class="feedback" id="expense-status" role="status"></p>
+    </section>
+
+    <details>
+      <summary>Salary &amp; savings target</summary>
+      <p class="muted">These amounts apply to every month.</p>
+      <form id="budget-form">
+        <label>Monthly salary (PKR)<input id="salary" type="number" inputmode="decimal" min="0" max="100000000" step="0.01" required></label>
+        <label>Monthly savings target (PKR)<input id="target" type="number" inputmode="decimal" min="0" max="100000000" step="0.01" required></label>
+        <button type="submit">Save budget</button>
+      </form>
+      <p class="feedback" id="budget-status" role="status"></p>
+    </details>
+  </div>
+
+  <div class="stack">
+    <section aria-labelledby="history-title">
+      <h2 id="history-title">Expenses</h2>
+      <p id="history-caption" class="muted"></p>
+      <p id="empty" class="muted">No expenses recorded for this month.</p>
+      <ul id="entries"></ul>
+      <p class="feedback" id="history-status" role="status"></p>
+    </section>
+
+    <section aria-labelledby="category-title">
+      <h2 id="category-title">Spending by category</h2>
+      <p id="category-empty" class="muted">Category totals will appear here.</p>
+      <ul id="category-list"></ul>
+    </section>
+
+    <details>
+      <summary>Backup &amp; export</summary>
+      <p class="muted">A JSON backup includes every month and your budget. Restoring a backup replaces the data in this browser.</p>
+      <div class="actions">
+        <button id="backup" type="button">Download JSON</button>
+        <button id="restore" type="button">Restore JSON</button>
+        <button id="csv" type="button">Export month CSV</button>
+        <button id="pdf" type="button">Export month PDF</button>
+      </div>
+      <p class="muted">For PDF, choose Save as PDF in the print dialog.</p>
+      <input id="backup-file" type="file" accept=".json,application/json" aria-label="Select a JSON backup" hidden>
+      <p class="feedback" id="backup-status" role="status"></p>
+    </details>
+  </div>
+</div>
+<footer class="muted">
+  <p id="offline" role="status">Checking offline availability…</p>
+  <p>Data stays in this browser. Save a JSON backup before clearing browser data or moving to another device.</p>
+  <p class="feedback" id="storage-status" role="status"></p>
+</footer>
+</main>
 <script>
-(()=>{'use strict';const KEY='najum-expenses-v1',CFG='najum-expenses-config-v1';const $=id=>document.getElementById(id);const money=n=>'Rs. '+Number(n||0).toLocaleString('en-PK',{maximumFractionDigits:2});let items=[],cfg={salary:69800,target:20000};try{const x=JSON.parse(localStorage.getItem(KEY)||'[]');if(Array.isArray(x))items=x;const c=JSON.parse(localStorage.getItem(CFG)||'{}');cfg={...cfg,...c}}catch(e){alert('Stored records could not be read. Please restore a backup.')}const today=new Date();const localDate=new Date(today.getTime()-today.getTimezoneOffset()*60000).toISOString().slice(0,10);$('date').value=localDate;$('month').value=localDate.slice(0,7);$('salary').value=cfg.salary;$('target').value=cfg.target;function save(){localStorage.setItem(KEY,JSON.stringify(items))}function render(){const month=$('month').value;const a=items.filter(t=>t.date.slice(0,7)===month).sort((x,y)=>y.date.localeCompare(x.date)||y.created.localeCompare(x.created));const sum=k=>a.filter(t=>t.kind===k).reduce((s,t)=>s+t.amount,0);const income=cfg.salary+sum('income'),out=sum('expense')+sum('debt')+sum('transfer'),remaining=income-out+sum('refund');$('income').textContent=money(income);$('spent').textContent=money(out);$('remaining').textContent=money(remaining);$('goal').textContent=money(cfg.target);$('progress').style.width=Math.max(0,Math.min(100,cfg.target?remaining/cfg.target*100:0))+'%';$('progressText').textContent=cfg.target?Math.round(remaining/cfg.target*100)+'%':'—';const groups={};a.filter(t=>t.kind==='expense').forEach(t=>groups[t.category]=(groups[t.category]||0)+t.amount);const total=Object.values(groups).reduce((x,y)=>x+y,0);$('categories').replaceChildren();Object.entries(groups).sort((x,y)=>y[1]-x[1]).forEach(([name,value])=>{const d=document.createElement('div');d.style.marginBottom='12px';const r=document.createElement('div');r.className='row';const n=document.createElement('span');n.textContent=name;const v=document.createElement('b');v.textContent=money(value);r.append(n,v);const bar=document.createElement('div');bar.className='bar';const fill=document.createElement('div');fill.className='fill';fill.style.width=(value/total*100)+'%';bar.append(fill);d.append(r,bar);$('categories').append(d)});if(!total)$('categories').textContent='No expenses recorded yet.';$('transactions').replaceChildren();$('count').textContent=a.length+' records';a.forEach(t=>{const d=document.createElement('div');d.className='tx row';const info=document.createElement('div');const title=document.createElement('strong');title.textContent=t.note||t.category;const meta=document.createElement('div');meta.className='muted tiny';meta.textContent=t.date+' · '+t.kind+' · '+t.category;info.append(title,meta);const side=document.createElement('div');side.style.textAlign='right';const value=document.createElement('strong');value.textContent=(['income','refund'].includes(t.kind)?'+':'−')+money(t.amount);value.className=['income','refund'].includes(t.kind)?'green':'red';const del=document.createElement('button');del.textContent='Delete';del.type='button';del.setAttribute('aria-label','Delete '+(t.note||t.category));del.onclick=()=>{if(confirm('Delete this transaction?')){items=items.filter(z=>z.id!==t.id);save();render()}};side.append(value,document.createElement('br'),del);d.append(info,side);$('transactions').append(d)});if(!a.length)$('transactions').textContent='No transactions for this month.'}
-$('form').onsubmit=e=>{e.preventDefault();const amount=Number($('amount').value);if(!Number.isFinite(amount)||amount<=0)return;items.push({id:crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random(),created:new Date().toISOString(),date:$('date').value,amount,kind:$('kind').value,category:$('category').value,note:$('note').value.trim()});save();$('amount').value='';$('note').value='';$('status').textContent='Transaction saved on this device.';$('month').value=$('date').value.slice(0,7);render()};document.querySelectorAll('[data-quick]').forEach(b=>b.onclick=()=>{const [amount,category,note]=b.dataset.quick.split('|');$('amount').value=amount;$('category').value=category;$('kind').value='expense';$('note').value=note;$('amount').focus();$('status').textContent='Review and tap Save transaction.'});$('month').onchange=render;$('saveSettings').onclick=()=>{cfg.salary=Math.max(0,Number($('salary').value)||0);cfg.target=Math.max(0,Number($('target').value)||0);localStorage.setItem(CFG,JSON.stringify(cfg));render();alert('Settings saved')};function download(name,content,type){const blob=new Blob([content],{type});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}$('export').onclick=()=>download('expense-backup-'+localDate+'.json',JSON.stringify({version:1,items,cfg},null,2),'application/json');$('csv').onclick=()=>{const rows=[['date','type','category','description','amount'],...items.map(t=>[t.date,t.kind,t.category,t.note,t.amount])];download('expenses-'+localDate+'.csv',rows.map(r=>r.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(',')).join('\r\n'),'text/csv')};$('import').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const data=JSON.parse(await file.text());if(!Array.isArray(data.items)||!data.items.every(t=>typeof t.id==='string'&&typeof t.date==='string'&&Number.isFinite(t.amount)&&t.amount>0&&typeof t.kind==='string'&&typeof t.category==='string'))throw Error('Invalid backup');if(!confirm('Replace all current records with this backup?'))return;items=data.items;cfg={salary:69800,target:20000,...(data.cfg||{})};save();localStorage.setItem(CFG,JSON.stringify(cfg));$('salary').value=cfg.salary;$('target').value=cfg.target;render();alert('Backup restored')}catch(err){alert('Could not restore: '+err.message)}finally{e.target.value=''}};if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});render()})();
-</script></body></html>
+'use strict';
+const $ = id => document.getElementById(id);
+const categories = ['Food & groceries', 'Transport', 'Bills & utilities', 'Rent & home', 'Health', 'Shopping', 'Entertainment', 'Family', 'Education', 'Other'];
+const storageKey = 'pkr-expense-tracker.v1';
+const maxAmount = 10_000_000_000; // Paisa, to keep sums exact in JavaScript.
+const maxEntries = 10_000;
+const defaults = {version:1, salary:6980000, target:2000000, expenses:[]};
+const localDate = (d = new Date()) => [String(d.getFullYear()).padStart(4,'0'), String(d.getMonth()+1).padStart(2,'0'), String(d.getDate()).padStart(2,'0')].join('-');
+const validDate = s => typeof s === 'string' && /^\d{4}-\d\d-\d\d$/.test(s) && s >= '0001-01-01' && !isNaN(Date.parse(s)) && new Date(s).toISOString().slice(0,10) === s;
+const validAmount = (n, min = 0) => Number.isSafeInteger(n) && n >= min && n <= maxAmount;
+const currency = new Intl.NumberFormat('en-PK', {style:'currency', currency:'PKR', currencyDisplay:'code', minimumFractionDigits:0, maximumFractionDigits:2});
+const money = n => currency.format(n / 100);
+const toPaisa = field => Math.round($(field).valueAsNumber * 100);
+const monthName = new Intl.DateTimeFormat('en-PK', {month:'long', year:'numeric', timeZone:'UTC'});
+const monthRows = () => state.expenses.filter(e => e.date.startsWith($('month').value + '-')).sort((a,b) => b.date.localeCompare(a.date));
+
+function readBackup(data) {
+  if (data?.version !== 1 || !validAmount(data.salary) || !validAmount(data.target) ||
+      !Array.isArray(data.expenses) || data.expenses.length > maxEntries) throw new Error('Invalid backup');
+  const ids = new Set();
+  const expenses = data.expenses.map(e => {
+    if (!e || typeof e.id !== 'string' || !/^[a-z0-9-]{1,64}$/i.test(e.id) || ids.has(e.id) ||
+        !validDate(e.date) || !categories.includes(e.category) || !validAmount(e.amount, 1) ||
+        typeof e.note !== 'string' || e.note.length > 160) throw new Error('Invalid expense');
+    ids.add(e.id);
+    return {id:e.id, date:e.date, category:e.category, amount:e.amount, note:e.note};
+  });
+  return {version:1, salary:data.salary, target:data.target, expenses};
+}
+
+function notice(id, message, error = false) {
+  const el = $(id);
+  el.textContent = message;
+  el.classList.toggle('error', error);
+}
+
+let state = defaults;
+let unreadable = false;
+try {
+  const saved = localStorage.getItem(storageKey);
+  if (saved !== null) state = readBackup(JSON.parse(saved));
+} catch {
+  unreadable = true;
+  notice('storage-status', 'Saved data could not be opened. Use Restore JSON to recover from a backup, or allow browser storage and reopen the page.', true);
+}
+
+function save(next, status, restoring = false) {
+  if (unreadable && !restoring) {
+    notice(status, 'Changes are blocked because saved data could not be opened.', true);
+    return false;
+  }
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(next));
+  } catch {
+    notice(status, 'Could not save. Check that browser storage is available and has free space.', true);
+    return false;
+  }
+  state = next;
+  unreadable = false;
+  notice('storage-status', '');
+  return true;
+}
+
+function syncBudgetFields() {
+  $('salary').value = state.salary / 100;
+  $('target').value = state.target / 100;
+}
+
+function render() {
+  const rows = monthRows();
+  const totals = new Map();
+  let spent = 0;
+  for (const e of rows) {
+    spent += e.amount;
+    totals.set(e.category, (totals.get(e.category) || 0) + e.amount);
+  }
+  const balance = state.salary - spent;
+  const spendable = balance - state.target;
+  $('salary-total').textContent = money(state.salary);
+  $('spent-total').textContent = money(spent);
+  $('balance-total').textContent = money(balance);
+  $('budget-total').textContent = money(spendable);
+  $('budget-tile').classList.toggle('good', spendable >= 0);
+  $('goal').textContent = 'Savings target: ' + money(state.target) + (spendable < 0 ? ' · Short by ' + money(-spendable) : ' · Covered by the current balance');
+  $('history-caption').textContent = monthName.format(new Date($('month').value + '-01')) + ' · ' + rows.length + (rows.length === 1 ? ' expense' : ' expenses');
+  $('empty').hidden = rows.length > 0;
+  $('category-empty').hidden = !totals.size;
+  $('entries').replaceChildren(...rows.map(e => {
+    const item = document.createElement('li');
+    const copy = document.createElement('div');
+    const title = document.createElement('strong');
+    const detail = document.createElement('small');
+    const actions = document.createElement('div');
+    const amount = document.createElement('strong');
+    const remove = document.createElement('button');
+    title.textContent = e.note || e.category;
+    detail.textContent = e.date + (e.note ? ' · ' + e.category : '');
+    copy.append(title, detail);
+    actions.className = 'entry-actions';
+    amount.className = 'amount';
+    amount.textContent = money(e.amount);
+    remove.type = 'button';
+    remove.className = 'delete';
+    remove.textContent = 'Delete';
+    remove.setAttribute('aria-label', 'Delete ' + title.textContent + ', ' + money(e.amount) + ', ' + e.date);
+    remove.onclick = () => {
+      if (!confirm('Delete this ' + money(e.amount) + ' expense?')) return;
+      if (save({...state, expenses:state.expenses.filter(x => x.id !== e.id)}, 'history-status')) {
+        render();
+        const remaining = $('entries').querySelector('button');
+        (remaining || $('month')).focus();
+        notice('history-status', 'Expense deleted.');
+      }
+    };
+    actions.append(amount, remove);
+    item.append(copy, actions);
+    return item;
+  }));
+  $('category-list').replaceChildren(...[...totals].sort((a,b) => b[1] - a[1]).map(([category, total]) => {
+    const item = document.createElement('li');
+    const label = document.createElement('span');
+    const amount = document.createElement('span');
+    label.textContent = category;
+    amount.textContent = money(total);
+    amount.className = 'amount';
+    item.append(label, amount);
+    return item;
+  }));
+}
+
+const today = localDate();
+let selectedMonth = today.slice(0,7);
+$('date').value = today;
+$('month').value = selectedMonth;
+for (const category of categories) $('category').add(new Option(category, category));
+syncBudgetFields();
+render();
+
+$('month').addEventListener('change', () => {
+  if (!/^\d{4}-\d{2}$/.test($('month').value) || !$('month').validity.valid) $('month').value = selectedMonth;
+  selectedMonth = $('month').value;
+  render();
+  notice('history-status', '');
+});
+
+$('expense-form').addEventListener('submit', event => {
+  event.preventDefault();
+  const amount = toPaisa('amount');
+  const date = $('date').value;
+  const category = $('category').value;
+  const note = $('note').value.trim();
+  if (!validAmount(amount,1) || !validDate(date) || !categories.includes(category) || note.length > 160) {
+    notice('expense-status', 'Enter a valid amount, date and category.', true);
+    return;
+  }
+  if (state.expenses.length >= maxEntries) {
+    notice('expense-status', 'This tracker holds up to 10,000 expenses. Back up your data before removing entries to make space.', true);
+    return;
+  }
+  const id = Array.from(crypto.getRandomValues(new Uint8Array(16)), n => n.toString(16).padStart(2,'0')).join('');
+  if (save({...state, expenses:[...state.expenses, {id, date, category, amount, note}]}, 'expense-status')) {
+    $('amount').value = '';
+    $('note').value = '';
+    $('month').value = selectedMonth = date.slice(0,7);
+    render();
+    notice('history-status', '');
+    notice('expense-status', 'Expense added.');
+  }
+});
+
+$('budget-form').addEventListener('submit', event => {
+  event.preventDefault();
+  const salary = toPaisa('salary');
+  const target = toPaisa('target');
+  if (!validAmount(salary) || !validAmount(target)) {
+    notice('budget-status', 'Enter valid salary and target amounts.', true);
+    return;
+  }
+  if (save({...state, salary, target}, 'budget-status')) {
+    render();
+    notice('budget-status', 'Budget saved.');
+  }
+});
+
+function download(name, type, contents) {
+  const url = URL.createObjectURL(new Blob([contents], {type}));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = name;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 30_000);
+}
+
+$('backup').onclick = () => {
+  if (unreadable) {
+    notice('backup-status', 'Saved data could not be opened for backup.', true);
+    return;
+  }
+  download('expense-backup-' + localDate() + '.json', 'application/json', JSON.stringify(state, null, 2));
+  notice('backup-status', 'JSON backup download started.');
+};
+$('restore').onclick = () => $('backup-file').click();
+$('backup-file').onchange = async event => {
+  const file = event.target.files[0];
+  event.target.value = '';
+  if (!file) return;
+  let backup;
+  try {
+    if (file.size > 12_000_000) throw new Error('File too large');
+    backup = readBackup(JSON.parse(await file.text()));
+  } catch {
+    notice('backup-status', 'This file is not a valid Expense Tracker JSON backup. Your data was kept.', true);
+    return;
+  }
+  if (!confirm('Replace the current budget and all expenses with this backup (' + backup.expenses.length + ' expenses)?')) return;
+  if (save(backup, 'backup-status', true)) {
+    syncBudgetFields();
+    if (!monthRows().length && state.expenses.length) {
+      $('month').value = selectedMonth = state.expenses.reduce((latest, e) => e.date > latest ? e.date : latest, '').slice(0,7);
+    }
+    render();
+    for (const id of ['history-status', 'expense-status', 'budget-status']) notice(id, '');
+    notice('backup-status', 'Backup restored.');
+  }
+};
+
+const csvCell = value => '"' + value.replaceAll('"', '""') + '"';
+$('csv').onclick = () => {
+  if (unreadable) {
+    notice('backup-status', 'Saved data could not be opened for export.', true);
+    return;
+  }
+  const rows = monthRows().map(e => [
+    e.date, e.category, (e.amount/100).toFixed(2),
+    // Keep notes that look like formulas from running in a spreadsheet.
+    /^[\s\uFEFF]*[=+@-]|^[\t\r\n]/.test(e.note) ? "'" + e.note : e.note
+  ]);
+  const content = [['Date', 'Category', 'Amount (PKR)', 'Note'], ...rows].map(row => row.map(csvCell).join(',')).join('\r\n');
+  download('expenses-' + $('month').value + '.csv', 'text/csv;charset=utf-8', '\uFEFF' + content + '\r\n');
+  notice('backup-status', 'CSV download started.');
+};
+
+$('pdf').onclick = () => {
+  if (unreadable) {
+    notice('backup-status', 'Saved data could not be opened for export.', true);
+    return;
+  }
+  const title = document.title;
+  document.title = 'Expenses-' + $('month').value;
+  try {
+    window.print();
+  } finally {
+    document.title = title;
+  }
+};
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').then(registration => {
+    const worker = registration.installing || registration.waiting;
+    worker?.addEventListener('statechange', () => {
+      if (worker.state === 'redundant' && !registration.active) $('offline').textContent = 'Offline setup did not finish. Reopen the page while online to retry.';
+    });
+    return navigator.serviceWorker.ready;
+  }).then(() => {
+    $('offline').textContent = 'Ready to reopen offline on this device.';
+  }).catch(() => {
+    $('offline').textContent = 'Offline setup did not finish. Reopen the page while online to retry.';
+  });
+} else {
+  $('offline').textContent = 'Open the hosted tracker over HTTPS once to set up offline access.';
+}
+</script>
+</body>
+</html>

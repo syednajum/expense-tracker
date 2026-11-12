@@ -1,1 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192"><rect width="192" height="192" rx="40" fill="#0b1220"/><rect x="28" y="48" width="136" height="104" rx="18" fill="#20b486"/><path d="M28 76h136" stroke="#0b1220" stroke-width="9"/><circle cx="136" cy="112" r="14" fill="#0b1220"/><text x="96" y="36" text-anchor="middle" fill="white" font-size="20" font-family="sans-serif">PKR</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <path fill="#252443" d="M0 0h512v512H0z"/>
+  <path fill="#dcd3ff" d="M143 160a24 24 0 0 1 20-24l173-32a21 21 0 0 1 25 21v43H143z"/>
+  <rect x="117" y="151" width="278" height="214" rx="38" fill="#a993f1"/>
+  <path d="M395 212v91h-76a45.5 45.5 0 0 1 0-91z" fill="#e8fff1"/>
+  <circle cx="325" cy="257.5" r="13" fill="#236450"/>
+  <path d="M155 324h68" stroke="#e6ddff" stroke-width="13" stroke-linecap="round"/>
+</svg>
