@@ -1,7 +1,7 @@
 'use strict';
 
 const prefix = 'pkr-expense-tracker:' + self.registration.scope + ':';
-const cacheName = prefix + 'v2';
+const cacheName = prefix + 'v3';
 const files = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
 const shell = new Set(files.map(file => new URL(file, self.registration.scope).href));
 

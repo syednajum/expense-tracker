@@ -139,16 +139,18 @@ footer{margin:1rem 0 0}
     </section>
 
     <details>
-      <summary>Backup &amp; export</summary>
+      <summary>Import, backup &amp; export</summary>
+      <p class="muted">Import adds expenses from a JSON file on this device and skips records already imported from that file.</p>
       <p class="muted">A JSON backup includes every month and your budget. Restoring a backup replaces the data in this browser.</p>
       <div class="actions">
+        <button type="button" id="import-expenses">Import expenses</button>
         <button id="backup" type="button">Download JSON</button>
         <button id="restore" type="button">Restore JSON</button>
         <button id="csv" type="button">Export month CSV</button>
         <button id="pdf" type="button">Export month PDF</button>
       </div>
       <p class="muted">For PDF, choose Save as PDF in the print dialog.</p>
-      <input id="backup-file" type="file" accept=".json,application/json" aria-label="Select a JSON backup" hidden>
+      <input id="backup-file" type="file" accept=".json,application/json" aria-label="Select an Expense Tracker JSON file" hidden>
       <p class="feedback" id="backup-status" role="status"></p>
     </details>
   </div>
@@ -166,7 +168,7 @@ const categories = ['Food & groceries', 'Transport', 'Bills & utilities', 'Rent 
 const storageKey = 'pkr-expense-tracker.v1';
 const maxAmount = 10_000_000_000; // Paisa, to keep sums exact in JavaScript.
 const maxEntries = 10_000;
-const defaults = {version:1, salary:6980000, target:2000000, expenses:[]};
+const defaults = {version:1, salary:0, target:0, expenses:[]};
 const localDate = (d = new Date()) => [String(d.getFullYear()).padStart(4,'0'), String(d.getMonth()+1).padStart(2,'0'), String(d.getDate()).padStart(2,'0')].join('-');
 const validDate = s => typeof s === 'string' && /^\d{4}-\d\d-\d\d$/.test(s) && s >= '0001-01-01' && !isNaN(Date.parse(s)) && new Date(s).toISOString().slice(0,10) === s;
 const validAmount = (n, min = 0) => Number.isSafeInteger(n) && n >= min && n <= maxAmount;
@@ -174,20 +176,26 @@ const currency = new Intl.NumberFormat('en-PK', {style:'currency', currency:'PKR
 const money = n => currency.format(n / 100);
 const toPaisa = field => Math.round($(field).valueAsNumber * 100);
 const monthName = new Intl.DateTimeFormat('en-PK', {month:'long', year:'numeric', timeZone:'UTC'});
-const monthRows = () => state.expenses.filter(e => e.date.startsWith($('month').value + '-')).sort((a,b) => b.date.localeCompare(a.date));
+const monthRows = () => state.expenses.filter(e => e.date.slice(0,7) === $('month').value).sort((a,b) => b.date.localeCompare(a.date));
+const dateLabel = date => date.length === 7 ? 'Exact day unknown' : date;
 
-function readBackup(data) {
-  if (data?.version !== 1 || !validAmount(data.salary) || !validAmount(data.target) ||
-      !Array.isArray(data.expenses) || data.expenses.length > maxEntries) throw new Error('Invalid backup');
+function readExpenses(rows) {
+  if (!Array.isArray(rows) || rows.length > maxEntries) throw new Error('Invalid expense list');
   const ids = new Set();
-  const expenses = data.expenses.map(e => {
+  return rows.map(e => {
+    // A month alone records an expense whose day is unknown.
+    const validPeriod = typeof e?.date === 'string' && validDate(e.date.length === 7 ? e.date + '-01' : e.date);
     if (!e || typeof e.id !== 'string' || !/^[a-z0-9-]{1,64}$/i.test(e.id) || ids.has(e.id) ||
-        !validDate(e.date) || !categories.includes(e.category) || !validAmount(e.amount, 1) ||
+        !validPeriod || !categories.includes(e.category) || !validAmount(e.amount, 1) ||
         typeof e.note !== 'string' || e.note.length > 160) throw new Error('Invalid expense');
     ids.add(e.id);
     return {id:e.id, date:e.date, category:e.category, amount:e.amount, note:e.note};
   });
-  return {version:1, salary:data.salary, target:data.target, expenses};
+}
+
+function readBackup(data) {
+  if (data?.version !== 1 || !validAmount(data.salary) || !validAmount(data.target)) throw new Error('Invalid backup');
+  return {version:1, salary:data.salary, target:data.target, expenses:readExpenses(data.expenses)};
 }
 
 function notice(id, message, error = false) {
@@ -198,9 +206,10 @@ function notice(id, message, error = false) {
 
 let state = defaults;
 let unreadable = false;
+let savedSnapshot = null;
 try {
-  const saved = localStorage.getItem(storageKey);
-  if (saved !== null) state = readBackup(JSON.parse(saved));
+  savedSnapshot = localStorage.getItem(storageKey);
+  if (savedSnapshot !== null) state = readBackup(JSON.parse(savedSnapshot));
 } catch {
   unreadable = true;
   notice('storage-status', 'Saved data could not be opened. Use Restore JSON to recover from a backup, or allow browser storage and reopen the page.', true);
@@ -212,7 +221,13 @@ function save(next, status, restoring = false) {
     return false;
   }
   try {
-    localStorage.setItem(storageKey, JSON.stringify(next));
+    if (!restoring && localStorage.getItem(storageKey) !== savedSnapshot) {
+      notice(status, 'Data changed in another tab. Reload this page and try again.', true);
+      return false;
+    }
+    const serialized = JSON.stringify(next);
+    localStorage.setItem(storageKey, serialized);
+    savedSnapshot = serialized;
   } catch {
     notice(status, 'Could not save. Check that browser storage is available and has free space.', true);
     return false;
@@ -256,7 +271,7 @@ function render() {
     const amount = document.createElement('strong');
     const remove = document.createElement('button');
     title.textContent = e.note || e.category;
-    detail.textContent = e.date + (e.note ? ' · ' + e.category : '');
+    detail.textContent = dateLabel(e.date) + (e.note ? ' · ' + e.category : '');
     copy.append(title, detail);
     actions.className = 'entry-actions';
     amount.className = 'amount';
@@ -264,7 +279,7 @@ function render() {
     remove.type = 'button';
     remove.className = 'delete';
     remove.textContent = 'Delete';
-    remove.setAttribute('aria-label', 'Delete ' + title.textContent + ', ' + money(e.amount) + ', ' + e.date);
+    remove.setAttribute('aria-label', 'Delete ' + title.textContent + ', ' + money(e.amount) + ', ' + dateLabel(e.date));
     remove.onclick = () => {
       if (!confirm('Delete this ' + money(e.amount) + ' expense?')) return;
       if (save({...state, expenses:state.expenses.filter(x => x.id !== e.id)}, 'history-status')) {
@@ -363,21 +378,63 @@ $('backup').onclick = () => {
   download('expense-backup-' + localDate() + '.json', 'application/json', JSON.stringify(state, null, 2));
   notice('backup-status', 'JSON backup download started.');
 };
-$('restore').onclick = () => $('backup-file').click();
+function importExpenses(data) {
+  if (data?.type !== 'expense-import' || data.version !== 1) throw new Error('Choose an Expense Tracker import file.');
+  const rows = readExpenses(data.expenses);
+  const existing = new Map(state.expenses.map(e => [e.id, e]));
+  const added = rows.filter(row => {
+    const saved = existing.get(row.id);
+    if (!saved) return true;
+    if (JSON.stringify(saved) !== JSON.stringify(row)) throw new Error('An imported ID matches an expense with different details.');
+    return false;
+  });
+  if (!added.length) {
+    notice('backup-status', rows.length ? 'All expenses in this file are already recorded.' : 'This file contains no expenses.');
+    return;
+  }
+  if (state.expenses.length + added.length > maxEntries) throw new Error('This import would exceed the 10,000-expense limit.');
+  if (save({...state, expenses:[...state.expenses, ...added]}, 'backup-status')) {
+    const latest = added.reduce((date, row) => row.date > date ? row.date : date, '');
+    $('month').value = selectedMonth = latest.slice(0,7);
+    render();
+    notice('history-status', '');
+    notice('backup-status', 'Imported ' + added.length + (added.length === 1 ? ' expense.' : ' expenses.'));
+  }
+}
+
+let importing = false;
+$('import-expenses').onclick = () => {
+  importing = true;
+  $('backup-file').click();
+};
+$('restore').onclick = () => {
+  importing = false;
+  $('backup-file').click();
+};
 $('backup-file').onchange = async event => {
+  const merge = importing;
   const file = event.target.files[0];
   event.target.value = '';
   if (!file) return;
-  let backup;
+  let data;
   try {
     if (file.size > 12_000_000) throw new Error('File too large');
-    backup = readBackup(JSON.parse(await file.text()));
+    data = JSON.parse(await file.text());
+    if (!merge) data = readBackup(data);
   } catch {
-    notice('backup-status', 'This file is not a valid Expense Tracker JSON backup. Your data was kept.', true);
+    notice('backup-status', 'Could not read this Expense Tracker JSON file. Your data was kept.', true);
     return;
   }
-  if (!confirm('Replace the current budget and all expenses with this backup (' + backup.expenses.length + ' expenses)?')) return;
-  if (save(backup, 'backup-status', true)) {
+  if (merge) {
+    try {
+      importExpenses(data);
+    } catch (error) {
+      notice('backup-status', error.message + ' Your data was kept.', true);
+    }
+    return;
+  }
+  if (!confirm('Replace the current budget and all expenses with this backup (' + data.expenses.length + ' expenses)?')) return;
+  if (save(data, 'backup-status', true)) {
     syncBudgetFields();
     if (!monthRows().length && state.expenses.length) {
       $('month').value = selectedMonth = state.expenses.reduce((latest, e) => e.date > latest ? e.date : latest, '').slice(0,7);
